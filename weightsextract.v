@@ -15,6 +15,8 @@ From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import all_algebra.
 Import GRing.Theory Num.Def Num.Theory.
 
+Require Reals.
+
 Require Import OUVerT.strings OUVerT.compile OUVerT.dist
         OUVerT.numerics OUVerT.dyadic OUVerT.orderedtypes.
 Require Import MWU.weights MWU.weightslang.
@@ -1376,7 +1378,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
   (*[Reals] introduces its own scope [R], so this definition goes first.*)
   Definition epsOk (eps : rat) : Prop := (0 < eps <= 1 / 2%:R)%R.
   
-  Require Import Reals.
+  Import Reals.
   
   Lemma interp_mult_weights_epsilon_no_regret :
     forall (nx : N) (t' : cstate) (eps : D) (eps_ok : epsOk (Q_to_rat (D_to_Q eps)))
