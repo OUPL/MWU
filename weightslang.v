@@ -2140,13 +2140,24 @@ Section semantics_lemmas.
        d_init :: d_1 :: d_2 :: ... :: d_T :: d_(T+1)
     the expected cost at time (T+1) is the expected cost of c_(T+1) given 
     action distribution d_T. The expected cost at time 1 is the 
-    cost of c_1 given d_init. *)
+    cost of c_1 given d_init. 
+
+    Note that, in state_expCost1_aux below, cost vectors and 
+    distributions are evaluated in the following order (because 
+    they're accumulated in reverse):  
+
+                  c_(T+1) :: c_T :: ... :: c_2 :: c_1
+       d_(T+1) ::     d_T :: ... :: c_2 :: c_1 :: d_init
+
+    (d_(T+1), the distribution generated in round T+1 in response to 
+     cost vector C_(T+1), is thrown away since it's not matched by 
+     a response cost vector C_(T+2).) *)
 
   Fixpoint state_expCost1_aux
            (l : seq {c : {ffun A -> rat} & forall a : A, `|c a| <= 1})
            (ds : seq (dist.dist A rat_realFieldType)) :=
     match l, ds with
-    | [:: c & l'], [:: d, d' & ds'] =>
+    | [:: c & l'], [:: _, d' & ds'] =>
       (rat_to_R (expectedValue d' (fun a => projT1 c a)) +
        state_expCost1_aux l' [:: d' & ds'])%R
     | _, _ => 0%R
