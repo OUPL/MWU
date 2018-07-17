@@ -68,19 +68,19 @@ Class ClientOracle {A} :=
            ; oracle_init_state : T
            ; oracle_chanty : Type
            ; oracle_bogus_chan : oracle_chanty
-           ; oracle_prerecv : T -> oracle_chanty -> bool
+           ; oracle_prerecv : T -> oracle_chanty -> bool * T
            ; oracle_recv : T -> oracle_chanty -> (list (A*D) * T)
            ; oracle_presend : T -> list (A*D) -> bool
            ; oracle_send : T -> list (A*D) -> (oracle_chanty * T)
-           ; oracle_recv_ok : forall st ch,
-               oracle_prerecv st ch = true ->
+           ; oracle_recv_ok : forall st ch st',
+               oracle_prerecv st ch = (true, st') ->
                forall a,
                exists d,
-                 [/\ In (a,d) (oracle_recv st ch).1
+                 [/\ In (a,d) (oracle_recv st' ch).1
                    , Dle (-D1) d & Dle d D1]
-           ; oracle_recv_nodup : forall st ch,
-               oracle_prerecv st ch = true ->
-               NoDupA (fun p q => p.1 = q.1) (oracle_recv st ch).1
+           ; oracle_recv_nodup : forall st ch st',
+               oracle_prerecv st ch = (true, st') ->
+               NoDupA (fun p q => p.1 = q.1) (oracle_recv st' ch).1
            }.
 
 (** * Program *)
@@ -198,9 +198,9 @@ Module MWUPre (A : MyOrderedType).
                      (SOracleSt s))
            end
       | CRecv =>
-        if oracle_prerecv (SOracleSt s) (SChan s) 
-        then 
-          let (c, st') := mwu_recv (SChan s) (SOracleSt s)
+        let (b, st') := oracle_prerecv (SOracleSt s) (SChan s) in
+        if b then                               
+          let (c, st'') := mwu_recv (SChan s) st'
           in Some (mkCState
                      c
                      (SCosts s :: SPrevCosts s)
@@ -208,7 +208,7 @@ Module MWUPre (A : MyOrderedType).
                      (SEpsilon s)
                      (SOutputs s)
                      (SChan s)
-                     st')
+                     st'')
         else None
       | CSend =>
         if oracle_presend (SOracleSt s) (M.elements (SWeights s))
@@ -343,25 +343,25 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
     Definition oracle_cT : Type := (T (ClientOracle := coracle)).
     
     Lemma recv_ok :
-      forall st ch, oracle_prerecv st ch = true -> 
+      forall st ch st', oracle_prerecv st ch = (true, st') -> 
       forall a,
       exists d,
-        [/\ M.find a (mwu_recv ch st).1 = Some d
+        [/\ M.find a (mwu_recv ch st').1 = Some d
           , Dle_bool (-D1) d & Dle_bool d D1].
     Proof.
       rewrite /mwu_recv.
-      move => st ch Hpre a0.
-      have H: NoDupA (M.eq_key (elt:=D)) (oracle_recv st ch).1.
+      move => st ch st' Hpre a'.
+      have H: NoDupA (M.eq_key (elt:=D)) (oracle_recv st' ch).1.
       { generalize (oracle_recv_nodup (ClientOracle:=coracle) Hpre) => H.
         rewrite NoDupA_ext; first by apply: H.
         rewrite /M.eq_key /M.Raw.Proofs.PX.eqk => a b.
           by rewrite -A.eqP. }
-      move: a0 => a.      
+      move: a' => a.      
       case: (oracle_recv_ok Hpre a) => q []H2 H3.      
       exists q; split => //.
       2: { by rewrite <-Dle_bool_iff in H3; rewrite H3. }
       2: { by rewrite <-Dle_bool_iff in p; rewrite p. }
-      destruct (oracle_recv st ch).
+      destruct (oracle_recv st' ch).
       rewrite MProps.of_list_1b => //.
       move: H H2 {H3 p}; rewrite print_Dvector_id;
        generalize (oracle_recv (ClientOracle:=coracle) st ch) a q.
@@ -438,14 +438,14 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
   (** The oracular compilation interface *)
   Class match_oracles : Prop :=
     mkMatchOracles {
-      match_oracle_recv : forall (ct : oracle_cT) (t : oracle_T) s ch,
+      match_oracle_recv : forall (ct ct' : oracle_cT) (t : oracle_T) s ch,
         match_oracle_states t ct ->
-        oracle_prerecv ct ch = true ->  
-        let: (m, ct') := mwu_recv ch ct in
+        oracle_prerecv ct ch = (true, ct') ->  
+        let: (m, ct'') := mwu_recv ch ct' in
         match_maps s m -> 
         exists t',
         [/\ weightslang.oracle_recv t ch s t'
-          & match_oracle_states t' ct']
+          & match_oracle_states t' ct'']
 
     ; match_oracle_send :
         forall (ct : oracle_cT) (tx : oracle_T) ch' m
@@ -987,6 +987,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
 
   Variable a0 : t.
 
+
   Lemma interp_step_plus :
     forall (s : state t) (tx tx' : cstate) (c : com t),
       interp c tx = Some tx' ->
@@ -1025,7 +1026,9 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
       by case: H5x => H5x H6 a; move: (H6 a); rewrite ffunE. }
     { intros s tx t'; inversion 1; subst. clear H.
       intros H2.
-      set c := mwu_recv (SChan tx) (SOracleSt tx).
+      remember (oracle_prerecv (SOracleSt tx) (SChan tx)) as p.
+      destruct p as [b c'].
+      set c := mwu_recv (SChan tx) c'.
       set f :=
         finfun
           (fun a : t =>
@@ -1035,27 +1038,31 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
              end).
       have pf: forall a, (`|f a| <= 1)%R.
       { move => a.
-        rewrite /f ffunE /c.
-        clear f c.
-        move: H1; case Hpre: (oracle_prerecv _ _) => //.
-        case: (recv_ok Hpre a) => q [] -> H H3.
-        rewrite -Q_to_rat1 ler_norml => _.
-        apply/andP; split.
+        rewrite /f ffunE /c'.
+        move: Heqp H1.
+        case: b => Heqp H1 //.
+        symmetry in Heqp.
+        move: (recv_ok Heqp a) => Hpre.
+        destruct Hpre as [d Hpre]; inversion Hpre.
+        rewrite /c. rewrite H.
+        rewrite -Q_to_rat1 (ler_norml _ _).
+        apply /andP; split.
         { rewrite -Q_to_rat_opp.
           apply: Q_to_rat_le.
-          move: (Qred_correct (D_to_Q q)) ->.
+          move: (Qred_correct (D_to_Q d)) ->.
           apply: Qle_bool_imp_le.
-          by move: H; rewrite /Dle_bool Dopp_ok D_to_Q1. }
+          by move: H0; rewrite /Dle_bool Dopp_ok D_to_Q1. }
         apply: Q_to_rat_le.
-        move: (Qred_correct (D_to_Q q)) ->.
+        move: (Qred_correct (D_to_Q d)) ->.
         apply: Qle_bool_imp_le.
         by move: H3; rewrite /Dle_bool D_to_Q1. }
       exists CSkip.
       have Hora: match_oracle_states (weightslang.SOracleSt s) (SOracleSt tx).
       { by case: H2. }
-      move: H1.
-      case Hpre: (oracle_prerecv _ _) => //.
-      case Hrecv': (mwu_recv (SChan tx) (SOracleSt tx)) => [m tx'].
+      move: H1 Heqp.
+      case: b => //.
+      case Hrecv': (mwu_recv (SChan tx) c') => [m tx'] HSomeEq Hpre.
+      symmetry in Hpre.
       have Hmaps: match_maps f m.
       { rewrite /match_maps/f => a; rewrite ffunE.
         case: (recv_ok Hpre a) => q []Hx Hy Hz.
@@ -1092,7 +1099,8 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
         { by case: H2. }
         by []. }
       inversion H2; subst. simpl in *.
-      inversion H1; subst; constructor; try solve[auto | constructor; auto]. }
+      inversion HSomeEq; subst.
+      constructor; try solve[auto | constructor; auto]. }
     { intros s tx; inversion 1; subst; clear H.
       intros H2.
       exists CSkip.
@@ -1367,6 +1375,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
     simpl.
     case: (nat_rect _ _) => // [s1].
     destruct (oracle_prerecv _ _) eqn:Hpresend => //.
+    move: Hpresend. case : b => Hpresend //.
     destruct (mwu_recv (SChan s1)) eqn:Hrecv => /=.
     case: (update_weights _ _) => //= a1.
     destruct (oracle_presend _ _) eqn:Hpresend1 => //.
