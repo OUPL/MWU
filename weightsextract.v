@@ -1422,5 +1422,4 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
   End mwuproof.
   End mwuProof.
   End OrderedFinType_Section.
-  Print Assumptions interp_mult_weights_epsilon_no_regret.
-End MWUProof.
+(*   Print Assumptions interp_mult_weights_epsilon_no_regret. *)End MWUProof.
