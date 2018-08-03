@@ -13,14 +13,10 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
       running by manipulating them at this point
 **)
   (* Number of strategies *)
-  Definition num_strategies := 25.
+  Definition num_strategies := 10.
   (* learning parameter *)
   Definition eta : dyadic.D :=
     dyadic.Dmake BinIntDef.Z.one (4%positive).
-
-  Lemma bleh : (dyadic.D_to_Q eta = QArith_base.Qmake 1 16).
-    reflexivity.
-  Qed.
 
   Definition num_rounds : N.t := N.of_nat 10.
 
