@@ -3737,8 +3737,7 @@ let inRel_list_complete_bool =
 (** val num_strategies : nat **)
 
 let num_strategies =
-  S (S (S O))
-
+  S (S (S (S O)))
 (** val eta : d **)
 
 let eta =
@@ -3748,6 +3747,7 @@ let eta =
 
 let num_rounds =
   Big.of_int 5
+    
 (** val inputChanName : char list **)
 
 let inputChanName =

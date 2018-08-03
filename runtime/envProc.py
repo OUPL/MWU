@@ -1,10 +1,11 @@
 import math
+import random
 
 inBuff = open('envInput', 'r')
 outBuff = open('envOutput', 'w')
 
-num_rounds = 10
-num_strats = 10
+num_strats = 4
+num_rounds = 5
 
 def floatToDyadic (x) :
     frac = float.as_integer_ratio(x)
@@ -22,14 +23,25 @@ def stringOfDyadicList (l) :
         s = s + " " + (stringOfDyadic(x))
     return s + "\n"
 
-#This is just a 0-cost vector for n players
+#This is just a 0-cost vector for n strats
 def dummyVector (n) :
     return [0.0] * n
-    
+#This is a random cost vector for n strats
+def dummyVector2 (n) :
+    return [random.uniform(-1,1) for _ in range(n)]
+
+#This is a .5 cost vector for all strats except the first 
+def dummyVector3 (n) :
+    l = [0.5] * n
+    l[0] = .25 
+    print(l)
+    return l
+
 for x in range(num_rounds):
     print ("Starting round: " + str(x))
     weightVec_string = inBuff.readline()
-    costVec = dummyVector(num_strats)
+    print(weightVec_string)
+    costVec = dummyVector3(num_strats)
     outBuff.write(
         stringOfDyadicList(
             floatListToDyadic(costVec)))

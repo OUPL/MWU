@@ -7086,6 +7086,8 @@ val inRel_list_bool : ('a1 -> 'a2 -> bool) -> 'a1 list -> 'a2 list -> bool
 val inRel_list_complete_bool :
   ('a1 -> 'a2 -> bool) -> 'a1 enumerable -> 'a2 list -> bool
 
+val num_strategies : nat
+
 val eta : d
 
 val num_rounds : Coq_N.t

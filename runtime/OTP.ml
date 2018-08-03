@@ -1,8 +1,8 @@
 (** Type definitions and string conversions **)
 type d = { num : Big.big_int; den : Big.big_int }
 
-let num_strats = 10
-let num_rounds = 10
+let num_strats = 4
+let num_rounds = 5
                    
 let enumStrats =
   let rec incRec l n target =
