@@ -13,10 +13,15 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
       running by manipulating them at this point
 **)
   (* Number of strategies *)
-  Definition num_strategies := 10.
+  Definition num_strategies := 25.
   (* learning parameter *)
   Definition eta : dyadic.D :=
     dyadic.Dmake BinIntDef.Z.one (4%positive).
+
+  Lemma bleh : (dyadic.D_to_Q eta = QArith_base.Qmake 1 16).
+    reflexivity.
+  Qed.
+
   Definition num_rounds : N.t := N.of_nat 10.
 
   (* Change this to change the identifier of the input/output channels *)
@@ -26,7 +31,7 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
     "./clientOutput".
 
   Module strategies_bound : BOUND.
-    Definition n := 10.
+    Definition n := num_strategies.
     Lemma n_gt0 : is_true (ssrnat.leq 1 n).
     Proof. auto. Qed.
   End strategies_bound.
@@ -304,4 +309,4 @@ Definition extractedMW :=
 
 
 Extraction Language OCaml.
-Extraction "./_build/extractedMWU" extractedMW.
+Extraction "./runtime/extractedMWU" extractedMW.
