@@ -3734,6 +3734,11 @@ let rec inRel_list_bool aB_b lA lB =
 let inRel_list_complete_bool =
   inRel_list_bool
 
+(** val num_strategies : nat **)
+
+let num_strategies =
+  S (S (S O))
+
 (** val eta : d **)
 
 let eta =
@@ -3742,8 +3747,7 @@ let eta =
 (** val num_rounds : Coq_N.t **)
 
 let num_rounds =
-  Coq_N.of_nat (S (S (S (S (S (S (S (S (S (S O))))))))))
-
+  Big.of_int 5
 (** val inputChanName : char list **)
 
 let inputChanName =
@@ -3759,7 +3763,7 @@ module Coq_strategies_bound =
   (** val n : nat **)
 
   let n =
-    S (S (S (S (S (S (S (S (S (S O)))))))))
+    num_strategies
 
   (** val n_gt0 : __ **)
 
