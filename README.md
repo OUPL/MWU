@@ -43,3 +43,7 @@ The latter command installs the OUVerT files in your local .opam directory.
 ```
 make
 ```
+
+This will build the verified components of the system and extract the resulting MWU program to runtime/extractedMWU.ml.
+
+The runtime folder also contains some small applications showing how to connect the verified component into a larger system. See the file runtime/README.md for more details.
