@@ -21,6 +21,14 @@ Require Import OUVerT.strings OUVerT.compile OUVerT.dist
         OUVerT.numerics OUVerT.dyadic OUVerT.orderedtypes.
 Require Import MWU.weights MWU.weightslang.
 
+
+(** Move me to a numerics file **)
+Lemma reduceReduce q : Qred (D_to_Q (Dred q)) = Qred (D_to_Q q).
+Proof.
+  rewrite (Qred_complete (D_to_Q q) (D_to_Q (Dred q))) => //.
+  by rewrite Dred_correct.
+Qed.
+
 (** Here's a description of the compilation algorithm: 
 
   Source Language
@@ -166,7 +174,7 @@ Module MWUPre (A : MyOrderedType).
              match evalc (f a) s with
              | None => None
              | Some q =>
-               if Dlt_bool D0 q then Some (M.add a q acc')
+               if Dlt_bool D0 q then Some (M.add a (Dred q) acc')
                else None
              end
            end)
@@ -739,7 +747,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
         if Dlt_bool D0 q then 
           match (update_weights'_aux f s w l') with
              | None => None
-             | Some m => Some (M.add a q m)
+             | Some m => Some (M.add a (Dred q) m)
           end
         else None
       end
@@ -776,7 +784,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
     forall a,
       In a l ->
       exists q,
-        [/\ M.find a m' = Some q
+        [/\ M.find a m' = Some (Dred q)
           , evalc (f a) s = Some q
           & Dlt D0 q].
   Proof.
@@ -815,7 +823,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
     update_weights' f s = Some m ->
     forall a,
     exists q,
-      [/\ M.find a m = Some q
+      [/\ M.find a m = Some (Dred q)
         , evalc (f a) s = Some q
         & Dlt D0 q].
   Proof.
@@ -853,7 +861,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
       | Some acc' =>
           match evalc (f y.1) s with
           | Some q =>
-            if Dlt_bool D0 q then  Some (M.add y.1 q acc')
+            if Dlt_bool D0 q then  Some (M.add y.1 (Dred q) acc')
             else None
           | None => None
           end
@@ -880,7 +888,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
     update_weights f s = Some m ->
     forall a,
     exists q,
-      [/\ M.find a m = Some q
+      [/\ M.find a m = Some (Dred q)
         , evalc (f a) s = Some q
         & Dlt D0 q].
   Proof.
@@ -946,7 +954,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
     update_weights f s = Some m ->
     forall a : t,
     exists q,
-      [/\ M.find a m = Some q
+      [/\ M.find a m = Some (Dred q)
         , evalc (f a) s = Some q
         , Qred (D_to_Q q) = rat_to_Q (eval (f a) r)
         & Qlt 0 (D_to_Q q)].
@@ -974,7 +982,8 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
   Proof.
     move => H H2; split => a; case: (update_weights_inv2 H H2 a) => q.
     { case => H3 H4 H5 H6.
-      exists q; split => //.
+      exists (Dred q); split => //.
+      rewrite reduceReduce.
       by rewrite H5 ffunE. }
     case => H3 H4 H5 H6.
     have H7: 0 < Qred (D_to_Q q) by rewrite Qred_correct.
