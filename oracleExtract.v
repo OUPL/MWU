@@ -193,12 +193,12 @@ Definition prerecv_chk_nodup :  list (M.t * dyadic.D) -> bool :=
     correct range *)
 Definition in_range_bool (n : M.t)(p : M.t * dyadic.D) : bool :=
   (Mt_eqb n (fst p)) &&
-  (dyadic.Dle_bool (dyadic.D0) (snd p)) &&
+  (dyadic.Dle_bool (dyadic.Dopp dyadic.D1) (snd p)) &&
   (dyadic.Dle_bool (snd p) (dyadic.D1)).
 
 Definition in_range_Prop (n : M.t) (p : M.t * dyadic.D) : Prop :=
   n = (fst p) /\
-  (dyadic.Dle (dyadic.D0) (snd p)) /\
+  (dyadic.Dle (dyadic.Dopp dyadic.D1) (snd p)) /\
   (dyadic.Dle (snd p) (dyadic.D1)).
 
 Lemma in_range_refl :
@@ -208,7 +208,7 @@ Proof.
   intros.
   unfold in_range_bool.
   case_eq (Mt_eqb n (fst p)); intros.
-  case_eq (dyadic.Dle_bool (dyadic.D0) (snd p)); intros.
+  case_eq (dyadic.Dle_bool (dyadic.Dopp dyadic.D1) (snd p)); intros.
   case_eq (dyadic.Dle_bool (snd p) dyadic.D1); intros.
   all:simpl; constructor; unfold in_range_Prop.
   + split.
@@ -251,7 +251,7 @@ Definition myOracle_recv_ok :
       forall a,
         exists d,
           ssrbool.and3 (List.In (a, d) (fst (prerecv_recv ch)))
-          (dyadic.Dle dyadic.D0 d)
+          (dyadic.Dle (dyadic.Dopp dyadic.D1) d)
           (dyadic.Dle d dyadic.D1).
 Proof.
   intros. unfold prerecv in H.
@@ -272,24 +272,6 @@ Proof.
   destruct H0 as [H' [H4 H3]]; auto;
   subst; replace b with (fst b, snd b) in H1; try auto;
   destruct b; simpl; auto.
-Qed.
-
-Definition myOracle_recv_ok_weak :
-  forall st ch st',
-    prerecv st ch = (true, st') ->
-      forall a,
-        exists d,
-          ssrbool.and3 (List.In (a, d) (fst (prerecv_recv ch)))
-          (dyadic.Dle (dyadic.Dopp dyadic.D1) d)
-          (dyadic.Dle d dyadic.D1).
-Proof.
-  intros.
-  specialize (myOracle_recv_ok st ch st' H a) => H0.
-  destruct H0 as [d [H0 H0']].
-  exists d. split; auto.
-  eapply QArith_base.Qle_trans. 
-  2: eauto. unfold QArith_base.Qle. simpl.
-  apply BinInt.Pos2Z.neg_is_nonpos.
 Qed.
 
 Lemma myOracle_recv_no_dup :
@@ -370,7 +352,7 @@ Program Instance myOracle : ClientOracle :=
         _
         ).
   Next Obligation.
-    eapply (myOracle_recv_ok_weak st ch).
+    eapply (myOracle_recv_ok st ch).
     unfold prerecv. f_equal. simpl. auto.
   Qed.
   Next Obligation.

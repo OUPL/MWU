@@ -1416,6 +1416,28 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
     apply: mult_weights_epsilon_no_regret_noprime => //.
     eauto.
   Qed.
+
+
+  Lemma match_maps_lem s m : 
+    match_maps s m -> 
+    forall a q, M.find a m = Some q -> Qopp 1 <= D_to_Q q <= 1 ->
+    ler (normr (s a)) (GRing.one rat_numDomainType).
+  Proof.
+  rewrite /match_maps => H a q H0.
+  case: (H a) => q' [H1 H2].
+  rewrite H0 in H1; inversion H1; subst; clear H1.
+  case => H3 H4.
+  rewrite -rat_to_QK1 in H2.
+  apply rat_to_Q_inj in H2.
+  rewrite -H2 -Q_to_rat1.
+  rewrite real_ler_norml.
+  2: { rewrite /in_mem; simpl. apply ler_total. }
+  rewrite -Q_to_rat_opp.
+  apply /andP; split.
+  apply: Q_to_rat_le => //.
+  apply: Q_to_rat_le => //.
+  Qed.
+
   End mwuproof.
   End mwuProof.
   End OrderedFinType_Section.
