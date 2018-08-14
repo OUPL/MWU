@@ -1,4 +1,4 @@
-Require Import BinNat.
+Require Import BinNat NArith.
 Require Import MWU.weightsextract MWU.list_procedures.
 Require Import ProofIrrelevance.
 Require Import OUVerT.orderedtypes OUVerT.compile.
@@ -56,6 +56,7 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
   *)
 
   (* The following are axiomatized *)
+
     (** Input/output channel types *)
   Axiom inChan : Type.
   Axiom outChan : Type.
@@ -65,7 +66,6 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
     (** Functions for sending and receiving info over channels *)
   Axiom inChan_recv : inChan -> list (M.t * dyadic.D).
   Axiom outChan_send : outChan -> list (M.t * dyadic.D) -> unit.
-
 
   (* These are the Ocaml instantiations of these networking primitives *)
   Extract Constant inChan => "in_channel".
@@ -193,12 +193,12 @@ Definition prerecv_chk_nodup :  list (M.t * dyadic.D) -> bool :=
     correct range *)
 Definition in_range_bool (n : M.t)(p : M.t * dyadic.D) : bool :=
   (Mt_eqb n (fst p)) &&
-  (dyadic.Dle_bool (dyadic.Dopp dyadic.D1) (snd p)) &&
+  (dyadic.Dle_bool (dyadic.D0) (snd p)) &&
   (dyadic.Dle_bool (snd p) (dyadic.D1)).
 
 Definition in_range_Prop (n : M.t) (p : M.t * dyadic.D) : Prop :=
   n = (fst p) /\
-  (dyadic.Dle (dyadic.Dopp dyadic.D1) (snd p)) /\
+  (dyadic.Dle (dyadic.D0) (snd p)) /\
   (dyadic.Dle (snd p) (dyadic.D1)).
 
 Lemma in_range_refl :
@@ -208,7 +208,7 @@ Proof.
   intros.
   unfold in_range_bool.
   case_eq (Mt_eqb n (fst p)); intros.
-  case_eq (dyadic.Dle_bool (dyadic.Dopp dyadic.D1) (snd p)); intros.
+  case_eq (dyadic.Dle_bool (dyadic.D0) (snd p)); intros.
   case_eq (dyadic.Dle_bool (snd p) dyadic.D1); intros.
   all:simpl; constructor; unfold in_range_Prop.
   + split.
@@ -245,10 +245,117 @@ fun s chan => ((fst s), s).
 Definition presend : oracleState -> list (M.t * dyadic.D) -> bool :=
   fun _ _ => true.
 
+Definition myOracle_recv_ok :
+  forall st ch st',
+    prerecv st ch = (true, st') ->
+      forall a,
+        exists d,
+          ssrbool.and3 (List.In (a, d) (fst (prerecv_recv ch)))
+          (dyadic.Dle dyadic.D0 d)
+          (dyadic.Dle d dyadic.D1).
+Proof.
+  intros. unfold prerecv in H.
+  inversion H; subst.
+  rewrite Bool.andb_true_iff in H1.
+  destruct H1.
+  unfold prerecv_chk_complete_in_range_bool in H.
+  erewrite <- Bool.reflect_iff in H0.
+  2: {
+    apply InRel_list_complete_refl.
+    intros. apply in_range_refl.
+      apply MProps.enum_ok.
+  }
+  specialize (H0 a).
+  destruct H0 as [b [H0 H2]].
+  exists (snd b); constructor;
+  unfold in_range_Prop in H0;
+  destruct H0 as [H' [H4 H3]]; auto;
+  subst; replace b with (fst b, snd b) in H1; try auto;
+  destruct b; simpl; auto.
+Qed.
+
+Definition myOracle_recv_ok_weak :
+  forall st ch st',
+    prerecv st ch = (true, st') ->
+      forall a,
+        exists d,
+          ssrbool.and3 (List.In (a, d) (fst (prerecv_recv ch)))
+          (dyadic.Dle (dyadic.Dopp dyadic.D1) d)
+          (dyadic.Dle d dyadic.D1).
+Proof.
+  intros.
+  specialize (myOracle_recv_ok st ch st' H a) => H0.
+  destruct H0 as [d [H0 H0']].
+  exists d. split; auto.
+  eapply QArith_base.Qle_trans. 
+  2: eauto. unfold QArith_base.Qle. simpl.
+  apply BinInt.Pos2Z.neg_is_nonpos.
+Qed.
+
+Lemma myOracle_recv_no_dup :
+  forall st ch st',
+    prerecv st ch = (true, st') ->
+      SetoidList.NoDupA (fun p q : M.t * dyadic.D => fst p = fst q)
+        (fst (prerecv_recv ch)).
+Proof.
+  intros.
+  unfold prerecv in H. inversion H. 
+  rewrite Bool.andb_true_iff in H1.
+  destruct H1.
+  unfold prerecv_chk_nodup in H1.
+  erewrite <- Bool.reflect_iff in H1.
+  2: {
+    apply R_NoDupA_refl.
+    unfold uniqR_bool. 
+    apply Mt_refl_pair.
+  }
+  auto.
+Qed.
+
+(** Consider moving me to OUVerT.listlemmas **)
+
+Lemma NoDup_rel_inhab_implies_eq :
+  forall A (a1 a2 : A) l (R : A -> A -> Prop) (Rsymm : forall x y, R x y -> R y x),
+    SetoidList.NoDupA R l ->
+    List.In a1 l ->
+    List.In a2 l ->
+    R a1 a2 ->
+      a1 = a2.
+Proof.
+  intros. generalize dependent l.
+  intros l H.
+  induction H; intros.
+  - inversion H0.
+  destruct H1; subst.
+  {
+    destruct H3; subst; auto.
+    apply False_rec. apply H.
+    apply SetoidList.InA_alt.
+    eexists; split; eauto.
+  }
+  {
+    destruct H3; subst.
+    apply False_rec. apply H.
+    apply SetoidList.InA_alt.
+    eexists; split; eauto.
+    apply IHNoDupA; auto.
+  }
+Qed.
+
+(** Consider moving me to OUVerT.dyadic **)
+Lemma D_to_Q_preserves_order :
+  forall x y,
+    dyadic.Dle x y ->
+    QArith_base.Qle (dyadic.D_to_Q x) (dyadic.D_to_Q y).
+Proof.
+  intros. unfold dyadic.Dle in H. auto.
+Qed.
+
 (*
   With everything built previously, we can construct
     an instance of the ClientOracle.
 *)  
+
 Program Instance myOracle : ClientOracle :=
   (@mkOracle M.t
         oracleState
@@ -259,42 +366,302 @@ Program Instance myOracle : ClientOracle :=
         recv
         presend
         send
-        _ _
+        _
+        _
         ).
   Next Obligation.
-    rewrite Bool.andb_true_iff in H1.
-    destruct H1.
-    unfold prerecv_chk_complete_in_range_bool in H.
-    erewrite <- Bool.reflect_iff in H.
-    2: {
-      apply InRel_list_complete_refl.
-      intros. apply in_range_refl.
-        apply MProps.enum_ok.
-    }
-    specialize (H a).
-    destruct H as [b [H H1]].
-    exists (snd b); constructor;
-    unfold in_range_Prop in H;
-    destruct H as [H [H2 H3]]; auto.
-    subst. replace b with (fst b, snd b) in H1; try auto.
-    destruct b; simpl; auto.
+    eapply (myOracle_recv_ok_weak st ch).
+    unfold prerecv. f_equal. simpl. auto.
   Qed.
   Next Obligation.
-    rewrite Bool.andb_true_iff in H1.
-    destruct H1.
-    unfold prerecv_chk_nodup in H0.
-    erewrite <- Bool.reflect_iff in H0.
-    2: {
-      apply R_NoDupA_refl.
-      unfold uniqR_bool. 
-      apply Mt_refl_pair.
-    }
-    auto.
+    eapply (myOracle_recv_no_dup st).
+    unfold prerecv. rewrite <- H1. reflexivity.
   Qed.
 
 Module MWUextract := MWU M.
+Module MWUProof := MWUProof M MWUextract.
 
-(* These are some baasic extraction directives to
+
+
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_algebra.
+
+Definition ordinalOf_n : Type := 'I_(strategies_bound.n).
+
+Program Definition injectToOrdinal : M.t -> ordinalOf_n :=
+  fun x => @Ordinal _ (BinNatDef.N.to_nat (M.val x)) _.
+Next Obligation.
+  destruct x; simpl. auto.
+Defined.
+
+Program Definition injectToMod : ordinalOf_n -> M.t :=
+  fun x => (@M.mk (BinNatDef.N.of_nat (nat_of_ord x)) _).
+Next Obligation.
+  destruct x. rewrite Nat2N.id. auto.
+Defined.
+
+Lemma valSuffEq : 
+  forall x y, M.val x = M.val y -> x = y.
+Proof.
+  move => x y pf.
+  destruct x. simpl in pf.
+  generalize pf0. rewrite pf.
+  destruct y; simpl; move => pf2. 
+  f_equal. apply proof_irrelevance.
+Qed.
+
+Lemma injectsCancel : cancel injectToOrdinal injectToMod.
+Proof.
+  intros x. apply valSuffEq.
+  unfold injectToMod, injectToOrdinal; simpl.
+  rewrite N2Nat.id. auto.
+Qed.
+
+Definition eqMix : Equality.mixin_of MWUextract.A.t.
+Proof.
+  apply (@EqMixin _ (fun x y => BinNat.N.eqb (M.val x) (M.val y))).
+  intros x y.
+  move: (N.eqb_spec (M.val x) (M.val y)) => H.
+  inversion H; constructor; clear H0 H.
+  2:{ destruct x, y; subst. congruence. }
+  destruct x. simpl in H1. move: pf. rewrite H1.
+  intros. destruct y; simpl; f_equal.
+  apply proof_irrelevance.
+Qed.
+Canonical myEqType := Eval hnf in EqType MWUextract.A.t eqMix.
+
+Definition choiceMix : choiceMixin myEqType :=
+@CanChoiceMixin [choiceType of 'I_(strategies_bound.n)] _ _ _ injectsCancel.
+Canonical myChoiceType := Eval hnf in ChoiceType MWUextract.A.t choiceMix.
+
+
+Definition count_mixin : Countable.mixin_of myChoiceType :=
+    @CanCountMixin [countType of 'I_(strategies_bound.n)] _ _ _ injectsCancel.
+Canonical myCountType := Eval hnf in CountType MWUextract.A.t count_mixin.
+
+Program Definition fin_mixin : Finite.mixin_of myCountType :=
+  @CanFinMixin myCountType _ _ _ injectsCancel.
+Canonical myFinType := Eval hnf in FinType MWUextract.A.t fin_mixin.
+
+Definition myOracleProp_recv :
+  oracleState -> Chan ->
+  {ffun myFinType -> rat} ->
+  oracleState -> Prop := fun st ch f st'  =>
+    forall a, (`|f a| <= 1)%R.
+
+
+Definition myOracleProp_send :
+  oracleState ->
+  dist.dist myFinType rat_realFieldType ->
+  Chan -> oracleState -> Prop := fun _ _ _ _ => True.
+
+Program Instance anotherOracle : weightslang.ClientOracle
+   (MWUProof.t (eq_mixin:=eqMix) (choice_mixin:=choiceMix) fin_mixin)
+   oracleState oracle_chanty :=
+@weightslang.mkOracle
+  myFinType oracleState
+  Chan myOracleProp_recv
+  myOracleProp_send _.
+
+Definition match_states_myOracles :
+  oracleState ->
+  MWUProof.oracle_cT ->
+    Prop := eq.
+
+(** Next two proofs might be in OUVerT.listlemmas **)
+Lemma findA_implies_exists_mem :
+  forall A B f (l : list (A*B)) b,
+    SetoidList.findA f l = Some b ->
+    exists a, List.In (a, b) l.
+Proof.
+  induction l.
+  intros. inversion H.
+  intros. simpl in H.
+  destruct a.
+  case_eq (f a) => H1; rewrite H1 in H.
+  - exists a. left; f_equal. inversion H. auto.
+  - apply IHl in H. destruct H as [a' H].
+  exists a'. right; auto.
+Qed.
+
+Lemma relMorphNoDupA :
+  forall A (R1 R2 : A -> A -> Prop) l,
+    SetoidList.NoDupA R1 l ->
+    (forall a1 a2, R2 a1 a2 -> R1 a1 a2) ->
+    SetoidList.NoDupA R2 l.
+Proof.
+  intros.
+  induction H. auto.  
+  constructor. intros H2.
+  apply SetoidList.InA_alt in H2.
+  apply H.
+  apply SetoidList.InA_alt.
+  inversion H2. inversion H3. exists x0. split.
+  apply H0. auto. auto. auto.
+Qed.
+
+
+
+Definition init_oracle_st : oracleState :=
+  @oracle_init_state MWUextract.A.t myOracle.
+
+
+Program Instance myMatch :
+  @MWUProof.match_oracles eqMix choiceMix fin_mixin _ myOracle oracleState _ match_states_myOracles.
+Next Obligation.
+  rewrite /match_states_myOracles /myOracleProp_recv.
+  exists (prerecv_recv ch); split; auto.
+  simpl in H1. move => a.
+  move: (H1 a) => H0.
+  destruct H0 as [q [H0 H0']].
+  eapply MWUProof.match_maps_lem with (q := q).
+  apply H1. auto.
+  rewrite MWUextract.MProps.of_list_1b in H0.
+  apply findA_implies_exists_mem in H0.
+  destruct H0 as (a', H0).
+  rewrite strings.print_Dvector_id in H0.
+  assert (prerecv init_oracle_st ch = (true, (prerecv init_oracle_st ch).2)).
+  { unfold prerecv. rewrite H3. simpl. auto. }
+  move: (myOracle_recv_ok init_oracle_st ch _ H2 a') => H4.
+  move: (myOracle_recv_no_dup _ _ _ H2) => H5.
+  destruct H4 as [q' H4].
+  destruct H4.
+  assert ((a',q) = (a',q')).
+  { eapply NoDup_rel_inhab_implies_eq.
+    - 2: apply H5.
+    - intros. simpl in *. auto.
+    - apply H0.
+    - apply H4.
+    - simpl; auto.
+  }
+  inversion H8; subst.
+  unfold dyadic.Dle in H6, H7.
+  split.
+  2:{ eapply QArith_base.Qle_trans. apply H7.
+      apply QArith_base.Qle_lteq. right.
+      constructor.
+  }
+  eapply QArith_base.Qle_trans.
+  2: apply H6.
+  unfold dyadic.D0, QArith_base.Qle; simpl.
+  apply BinInt.Z.le_refl.
+  rewrite strings.print_Dvector_id.
+  assert (prerecv init_oracle_st ch = (true, (prerecv init_oracle_st ch).2)).
+  { unfold prerecv. rewrite H3. simpl. auto. }
+  move: (myOracle_recv_no_dup _ _ _ H0) => H5.
+  unfold MWUextract.M.eq_key, MWUextract.M.Raw.Proofs.PX.eqk.
+  unfold MWUextract.M.key.
+  unfold prerecv_recv in H5. simpl in H5.
+  eapply (relMorphNoDupA _ _ _ _ H5).
+  intros. rewrite M.eqP. auto.
+Qed.
+Next Obligation.
+  unfold myOracleProp_send.
+  unfold match_states_myOracles.
+  eexists.
+  split; try eauto.
+Qed.
+
+Definition a0 : @MWUProof.t eqMix choiceMix fin_mixin.
+Proof.
+  apply (@M.mk (N.of_nat 0)).
+  rewrite Nat2N.id. apply strategies_bound.n_gt0.
+Defined.
+
+(** Move me to OUVerT.listlemmas **)
+Lemma NoDupAsNoDupA :
+  forall A (l : list A),
+    List.NoDup l <-> SetoidList.NoDupA eq l.
+Proof.
+  intros.
+  induction l.
+  - split; intros; constructor.
+  - split; intros;
+    inversion H; subst; constructor;
+    try intros Hcontra;
+    try apply H2; try apply IHl; auto.
+    apply SetoidList.InA_alt in Hcontra.
+    destruct Hcontra as [y [Hcontra Hcontra']].
+    subst; auto.
+    apply SetoidList.InA_alt. exists a; split; auto.
+Qed.
+
+
+Instance refineClassInstance :
+  @RefineTypeAxiomClass (@MWUProof.t eqMix choiceMix fin_mixin) M.enumerable.
+Proof.
+  constructor. intros x.
+  rewrite mem_enum.
+  replace (x \in enumerate @MWUProof.t eqMix choiceMix fin_mixin) with true.
+  auto. simpl. symmetry.
+  replace ((x \in enumerate MWUextract.A.t) = true) with 
+    (is_true (x \in enumerate MWUextract.A.t)).
+  2: auto.
+  rewrite listlemmas.list_in_iff.
+  move: (MProps.enum_ok_obligation_2 x) => Hin. apply Hin.
+  apply listlemmas.nodup_uniq.
+  simpl.
+  apply NoDupAsNoDupA.
+  exact MProps.enumerate_t_nodup.
+Qed.
+
+
+Lemma etaOk : MWUProof.epsOk (numerics.Q_to_rat (dyadic.D_to_Q eta)).
+Proof.
+  constructor.
+Qed.
+
+Definition initMatch : 
+  match_states_myOracles init_oracle_st
+      (@oracle_init_state MWUextract.A.t myOracle).
+Proof.
+  unfold match_states_myOracles.  
+  constructor.
+Qed.
+
+Definition roundsPf : 0 < num_rounds.
+Proof. auto. Qed.
+
+
+Import Reals.
+Import dyadic numerics weightslang.
+Import MWUProof.
+
+Lemma mwu_proof : 
+  forall finState,
+    MWUextract.interp
+      (mult_weights
+         (MWUProof.t (eq_mixin:=eqMix) (choice_mixin:=choiceMix) fin_mixin)
+         num_rounds) (MWUextract.init_cstate eta) = 
+    Some finState ->
+    exists
+      s' : state
+             (MWUProof.t (eq_mixin:=eqMix) (choice_mixin:=choiceMix) fin_mixin)
+             oracleState oracle_chanty,
+      MWUProof.match_states (eq_mixin:=eqMix) (choice_mixin:=choiceMix)
+        (fin_mixin:=fin_mixin) match_states_myOracles s' finState /\
+      ((state_expCost1 (all_costs0 s') s' - OPTR a0 s') / Tx num_rounds <=
+       rat_to_R (Q_to_rat (D_to_Q eta)) +
+       ln
+         (rat_to_R
+            #|MWUProof.t (eq_mixin:=eqMix) (choice_mixin:=choiceMix) fin_mixin|%:R) /
+       (rat_to_R (Q_to_rat (D_to_Q eta)) * Tx num_rounds))%R.
+Proof.
+  intros.
+  eapply MWUProof.interp_mult_weights_epsilon_no_regret
+    with (enumerable_instance := M.enumerable)
+         (showable_instance := M.showable)
+         (init_oracle_st := init_oracle_st).
+  4: apply initMatch.
+  1: apply myMatch.
+  1: apply refineClassInstance.
+  1: apply etaOk.
+  1: apply roundsPf.
+  auto.
+Qed. 
+
+(* These are some basic extraction directives to
     reduce Coq types to their corresponding OCaml types *)
 Extract Inductive unit => "unit" [ "()" ].
 Extract Inductive sumbool => "bool" ["true" "false"].
@@ -305,4 +672,6 @@ Definition extractedMW :=
 
 
 Extraction Language OCaml.
+
+
 Extraction "./runtime/extractedMWU" extractedMW.
