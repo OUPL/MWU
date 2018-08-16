@@ -23,6 +23,8 @@ type 'a sig0 = 'a
 
 
 
+val pred : nat -> nat
+
 val add : nat -> nat -> nat
 
 val internal_eq_rew_r_dep : 'a1 -> 'a1 -> 'a2 -> 'a2
@@ -90,6 +92,10 @@ module Coq_Pos :
 
   val iter : ('a1 -> 'a1) -> 'a1 -> Big.big_int -> 'a1
 
+  val div2 : Big.big_int -> Big.big_int
+
+  val div2_up : Big.big_int -> Big.big_int
+
   val compare_cont : comparison -> Big.big_int -> Big.big_int -> comparison
 
   val compare : Big.big_int -> Big.big_int -> comparison
@@ -101,6 +107,8 @@ module Coq_Pos :
   val iter_op : ('a1 -> 'a1 -> 'a1) -> Big.big_int -> 'a1 -> 'a1
 
   val to_nat : Big.big_int -> nat
+
+  val of_nat : nat -> Big.big_int
 
   val of_succ_nat : nat -> Big.big_int
 
@@ -133,12 +141,15 @@ module Coq_N :
   val eq_dec : Big.big_int -> Big.big_int -> bool
  end
 
-module Z :
- sig
-  val one : Big.big_int
- end
+val le_lt_dec : nat -> nat -> bool
 
-module Coq_Z :
+val rev : 'a1 list -> 'a1 list
+
+val map : ('a1 -> 'a2) -> 'a1 list -> 'a2 list
+
+val fold_right : ('a2 -> 'a1 -> 'a1) -> 'a1 -> 'a2 list -> 'a1
+
+module Z :
  sig
   val double : Big.big_int -> Big.big_int
 
@@ -168,16 +179,12 @@ module Coq_Z :
 
   val max : Big.big_int -> Big.big_int -> Big.big_int
 
+  val div2 : Big.big_int -> Big.big_int
+
   val eq_dec : Big.big_int -> Big.big_int -> bool
  end
 
-val le_lt_dec : nat -> nat -> bool
-
-val rev : 'a1 list -> 'a1 list
-
-val map : ('a1 -> 'a2) -> 'a1 list -> 'a2 list
-
-val fold_right : ('a2 -> 'a1 -> 'a1) -> 'a1 -> 'a2 list -> 'a1
+val zeven_dec : Big.big_int -> bool
 
 val shift_pos : Big.big_int -> Big.big_int -> Big.big_int
 
@@ -3610,6 +3617,12 @@ val dsub : d -> d -> d
 val dle_bool : d -> d -> bool
 
 val dlt_bool : d -> d -> bool
+
+val dred' : Big.big_int -> nat -> Big.big_int * nat
+
+val d_of_Dred' : (Big.big_int * nat) -> d
+
+val dred : d -> d
 
 type 't showable =
   't -> char list
@@ -7090,7 +7103,7 @@ val num_strategies : nat
 
 val eta : d
 
-val num_rounds : Coq_N.t
+val num_rounds : Big.big_int
 
 val inputChanName : char list
 

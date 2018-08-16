@@ -4,8 +4,8 @@ import random
 inBuff = open('envInput', 'r')
 outBuff = open('envOutput', 'w')
 
-num_strats = 4
-num_rounds = 5
+num_strats = 17
+num_rounds = 24
 
 def floatToDyadic (x) :
     frac = float.as_integer_ratio(x)
@@ -41,7 +41,7 @@ for x in range(num_rounds):
     print ("Starting round: " + str(x))
     weightVec_string = inBuff.readline()
     print(weightVec_string)
-    costVec = dummyVector3(num_strats)
+    costVec = dummyVector2(num_strats)
     outBuff.write(
         stringOfDyadicList(
             floatListToDyadic(costVec)))

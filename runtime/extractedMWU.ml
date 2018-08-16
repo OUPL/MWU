@@ -39,6 +39,12 @@ type 'a sig0 = 'a
 
 
 
+(** val pred : nat -> nat **)
+
+let pred n0 = match n0 with
+| O -> n0
+| S u -> u
+
 module Coq__1 = struct
  (** val add : nat -> nat -> nat **)
  let rec add n0 m =
@@ -219,6 +225,24 @@ module Coq_Pos =
       (fun _ -> f x)
       n0
 
+  (** val div2 : Big.big_int -> Big.big_int **)
+
+  let div2 p =
+    Big.positive_case
+      (fun p0 -> p0)
+      (fun p0 -> p0)
+      (fun _ -> Big.one)
+      p
+
+  (** val div2_up : Big.big_int -> Big.big_int **)
+
+  let div2_up p =
+    Big.positive_case
+      (fun p0 -> succ p0)
+      (fun p0 -> p0)
+      (fun _ -> Big.one)
+      p
+
   (** val compare_cont :
       comparison -> Big.big_int -> Big.big_int -> comparison **)
 
@@ -272,6 +296,14 @@ module Coq_Pos =
 
   let to_nat x =
     iter_op Coq__1.add x (S O)
+
+  (** val of_nat : nat -> Big.big_int **)
+
+  let rec of_nat = function
+  | O -> Big.one
+  | S x -> (match x with
+            | O -> Big.one
+            | S _ -> succ (of_nat x))
 
   (** val of_succ_nat : nat -> Big.big_int **)
 
@@ -381,15 +413,34 @@ module Coq_N =
       n0
  end
 
+(** val le_lt_dec : nat -> nat -> bool **)
+
+let rec le_lt_dec n0 m =
+  match n0 with
+  | O -> true
+  | S n1 -> (match m with
+             | O -> false
+             | S m0 -> le_lt_dec n1 m0)
+
+(** val rev : 'a1 list -> 'a1 list **)
+
+let rec rev = function
+| [] -> []
+| x :: l' -> app (rev l') (x :: [])
+
+(** val map : ('a1 -> 'a2) -> 'a1 list -> 'a2 list **)
+
+let rec map f = function
+| [] -> []
+| a :: t2 -> (f a) :: (map f t2)
+
+(** val fold_right : ('a2 -> 'a1 -> 'a1) -> 'a1 -> 'a2 list -> 'a1 **)
+
+let rec fold_right f a0 = function
+| [] -> a0
+| b :: t2 -> f b (fold_right f a0 t2)
+
 module Z =
- struct
-  (** val one : Big.big_int **)
-
-  let one =
-    Big.one
- end
-
-module Coq_Z =
  struct
   (** val double : Big.big_int -> Big.big_int **)
 
@@ -509,6 +560,20 @@ module Coq_Z =
 
   let max = Big.max
 
+  (** val div2 : Big.big_int -> Big.big_int **)
+
+  let div2 z =
+    Big.z_case
+      (fun _ -> Big.zero)
+      (fun p ->
+      Big.positive_case
+        (fun _ -> (Coq_Pos.div2 p))
+        (fun _ -> (Coq_Pos.div2 p))
+        (fun _ -> Big.zero)
+        p)
+      (fun p -> Big.opp (Coq_Pos.div2_up p))
+      z
+
   (** val eq_dec : Big.big_int -> Big.big_int -> bool **)
 
   let eq_dec x y =
@@ -534,32 +599,24 @@ module Coq_Z =
       x
  end
 
-(** val le_lt_dec : nat -> nat -> bool **)
+(** val zeven_dec : Big.big_int -> bool **)
 
-let rec le_lt_dec n0 m =
-  match n0 with
-  | O -> true
-  | S n1 -> (match m with
-             | O -> false
-             | S m0 -> le_lt_dec n1 m0)
-
-(** val rev : 'a1 list -> 'a1 list **)
-
-let rec rev = function
-| [] -> []
-| x :: l' -> app (rev l') (x :: [])
-
-(** val map : ('a1 -> 'a2) -> 'a1 list -> 'a2 list **)
-
-let rec map f = function
-| [] -> []
-| a :: t2 -> (f a) :: (map f t2)
-
-(** val fold_right : ('a2 -> 'a1 -> 'a1) -> 'a1 -> 'a2 list -> 'a1 **)
-
-let rec fold_right f a0 = function
-| [] -> a0
-| b :: t2 -> f b (fold_right f a0 t2)
+let zeven_dec n0 =
+  Big.z_case
+    (fun _ -> true)
+    (fun p ->
+    Big.positive_case
+      (fun _ -> false)
+      (fun _ -> true)
+      (fun _ -> false)
+      p)
+    (fun p ->
+    Big.positive_case
+      (fun _ -> false)
+      (fun _ -> true)
+      (fun _ -> false)
+      p)
+    n0
 
 (** val shift_pos : Big.big_int -> Big.big_int -> Big.big_int **)
 
@@ -579,17 +636,17 @@ let qden x = x.qden
 (** val qcompare : q -> q -> comparison **)
 
 let qcompare p q0 =
-  Coq_Z.compare (Coq_Z.mul p.qnum q0.qden) (Coq_Z.mul q0.qnum p.qden)
+  Z.compare (Z.mul p.qnum q0.qden) (Z.mul q0.qnum p.qden)
 
 (** val qle_bool : q -> q -> bool **)
 
 let qle_bool x y =
-  Coq_Z.leb (Coq_Z.mul x.qnum y.qden) (Coq_Z.mul y.qnum x.qden)
+  Z.leb (Z.mul x.qnum y.qden) (Z.mul y.qnum x.qden)
 
 (** val qmult : q -> q -> q **)
 
 let qmult x y =
-  { qnum = (Coq_Z.mul x.qnum y.qnum); qden = (Coq_Pos.mul x.qden y.qden) }
+  { qnum = (Z.mul x.qnum y.qnum); qden = (Coq_Pos.mul x.qden y.qden) }
 
 (** val qinv : q -> q **)
 
@@ -1461,57 +1518,57 @@ module Z_as_Int =
   (** val add : Big.big_int -> Big.big_int -> Big.big_int **)
 
   let add =
-    Coq_Z.add
+    Z.add
 
   (** val opp : Big.big_int -> Big.big_int **)
 
   let opp =
-    Coq_Z.opp
+    Z.opp
 
   (** val sub : Big.big_int -> Big.big_int -> Big.big_int **)
 
   let sub =
-    Coq_Z.sub
+    Z.sub
 
   (** val mul : Big.big_int -> Big.big_int -> Big.big_int **)
 
   let mul =
-    Coq_Z.mul
+    Z.mul
 
   (** val max : Big.big_int -> Big.big_int -> Big.big_int **)
 
   let max =
-    Coq_Z.max
+    Z.max
 
   (** val eqb : Big.big_int -> Big.big_int -> bool **)
 
   let eqb =
-    Coq_Z.eqb
+    Z.eqb
 
   (** val ltb : Big.big_int -> Big.big_int -> bool **)
 
   let ltb =
-    Coq_Z.ltb
+    Z.ltb
 
   (** val leb : Big.big_int -> Big.big_int -> bool **)
 
   let leb =
-    Coq_Z.leb
+    Z.leb
 
   (** val eq_dec : Big.big_int -> Big.big_int -> bool **)
 
   let eq_dec =
-    Coq_Z.eq_dec
+    Z.eq_dec
 
   (** val gt_le_dec : Big.big_int -> Big.big_int -> bool **)
 
   let gt_le_dec i j =
-    let b = Coq_Z.ltb j i in if b then true else false
+    let b = Z.ltb j i in if b then true else false
 
   (** val ge_lt_dec : Big.big_int -> Big.big_int -> bool **)
 
   let ge_lt_dec i j =
-    let b = Coq_Z.ltb i j in if b then false else true
+    let b = Z.ltb i j in if b then false else true
 
   (** val i2z : t -> Big.big_int **)
 
@@ -2854,29 +2911,27 @@ let dadd d2 d3 =
   let { num = x2; den = y2 } = d3 in
   if Coq_Pos.ltb y1 y2
   then { num =
-         (Coq_Z.add
-           (Coq_Z.mul
-             (Coq_Z.pow_pos (Big.double Big.one) (Coq_Pos.sub y2 y1)) x1) x2);
+         (Z.add
+           (Z.mul (Z.pow_pos (Big.double Big.one) (Coq_Pos.sub y2 y1)) x1) x2);
          den = y2 }
   else if Coq_Pos.ltb y2 y1
        then { num =
-              (Coq_Z.add
-                (Coq_Z.mul
-                  (Coq_Z.pow_pos (Big.double Big.one) (Coq_Pos.sub y1 y2)) x2)
-                x1); den = y1 }
-       else { num = (Coq_Z.add x1 x2); den = y1 }
+              (Z.add
+                (Z.mul (Z.pow_pos (Big.double Big.one) (Coq_Pos.sub y1 y2))
+                  x2) x1); den = y1 }
+       else { num = (Z.add x1 x2); den = y1 }
 
 (** val dmult : d -> d -> d **)
 
 let dmult d2 d3 =
   let { num = x1; den = y1 } = d2 in
   let { num = x2; den = y2 } = d3 in
-  { num = (Coq_Z.mul x1 x2); den = (Coq_Pos.add y1 y2) }
+  { num = (Z.mul x1 x2); den = (Coq_Pos.add y1 y2) }
 
 (** val dopp : d -> d **)
 
 let dopp d2 =
-  let { num = x; den = y } = d2 in { num = (Coq_Z.opp x); den = y }
+  let { num = x; den = y } = d2 in { num = (Z.opp x); den = y }
 
 (** val dsub : d -> d -> d **)
 
@@ -2894,6 +2949,22 @@ let dlt_bool d2 d3 =
   match qcompare (d_to_Q d2) (d_to_Q d3) with
   | Lt -> true
   | _ -> false
+
+(** val dred' : Big.big_int -> nat -> Big.big_int * nat **)
+
+let rec dred' n0 d2 = match d2 with
+| O -> (n0, d2)
+| S d' -> if zeven_dec n0 then dred' (Z.div2 n0) d' else (n0, d2)
+
+(** val d_of_Dred' : (Big.big_int * nat) -> d **)
+
+let d_of_Dred' = function
+| (x, y) -> { num = x; den = (Coq_Pos.of_nat (S y)) }
+
+(** val dred : d -> d **)
+
+let dred d2 =
+  d_of_Dred' (dred' d2.num (pred (Coq_Pos.to_nat d2.den)))
 
 type 't showable =
   't -> char list
@@ -3420,7 +3491,8 @@ module MWUPre =
       match acc with
       | Some acc' ->
         (match evalc oracle (f a) s with
-         | Some q0 -> if dlt_bool d0 q0 then Some (M.add a q0 acc') else None
+         | Some q0 ->
+           if dlt_bool d0 q0 then Some (M.add a (dred q0) acc') else None
          | None -> None)
       | None -> None) (coq_SWeights oracle s) (Some M.empty)
 
@@ -3617,7 +3689,8 @@ module MWU =
       match acc with
       | Some acc' ->
         (match evalc oracle (f a) s with
-         | Some q0 -> if dlt_bool d0 q0 then Some (M.add a q0 acc') else None
+         | Some q0 ->
+           if dlt_bool d0 q0 then Some (M.add a (dred q0) acc') else None
          | None -> None)
       | None -> None) (coq_SWeights oracle s) (Some M.empty)
 
@@ -3737,17 +3810,19 @@ let inRel_list_complete_bool =
 (** val num_strategies : nat **)
 
 let num_strategies =
-  S (S (S (S O)))
+  S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S O))))))))))))))))
+
 (** val eta : d **)
 
 let eta =
-  { num = Z.one; den = (Big.double (Big.double Big.one)) }
+  { num = (Big.doubleplusone Big.one); den = (Big.doubleplusone Big.one) }
 
-(** val num_rounds : Coq_N.t **)
+(** val num_rounds : Big.big_int **)
 
 let num_rounds =
-  Big.of_int 5
-    
+  Coq_N.of_nat (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+    (S (S (S O))))))))))))))))))))))))
+
 (** val inputChanName : char list **)
 
 let inputChanName =

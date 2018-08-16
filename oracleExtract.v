@@ -13,12 +13,11 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
       running by manipulating them at this point
 **)
   (* Number of strategies *)
-  Definition num_strategies := 10.
+  Definition num_strategies := 17.
   (* learning parameter *)
-  Definition eta : dyadic.D :=
-    dyadic.Dmake BinIntDef.Z.one (4%positive).
+  Definition eta := dyadic.Dmake (3%Z) (3%positive).
 
-  Definition num_rounds : N.t := N.of_nat 10.
+  Definition num_rounds := N.of_nat 24.
 
   (* Change this to change the identifier of the input/output channels *)
   Definition inputChanName : string := 
