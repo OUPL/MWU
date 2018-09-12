@@ -25,8 +25,9 @@ import sys
 ############################
 # Parameters to propagate
 ############################
-STRATEGIES = 17
-NUM_ROUNDS = 24
+STRATEGIES = 10
+NUM_ROUNDS = 80
+NUM_EXAMPLES = 20
 ETA = .375
 
 ############################
@@ -62,8 +63,12 @@ strat_string_python = "num_strats = " + str(STRATEGIES) + "\n"
 round_pattern_python = re.compile('num_rounds =*')
 round_string_python = "num_rounds = " + str(NUM_ROUNDS) + "\n"
 
+example_pattern_python = re.compile('num_examples =*')
+example_string_python = "num_examples = " + str(NUM_EXAMPLES) + "\n"
 
-for line in fileinput.input(["oracleExtract.v", "./runtime/OTP.ml", "./runtime/envProc.py"], inplace=1):
+for line in fileinput.input(["oracleExtract.v", "./runtime/OTP.ml", "./runtime/envProc.py",
+                             "./examples/classifier/OTP.ml", "./examples/classifier/envProc.py"],
+                             inplace=1):
     if strat_pattern_coq.match(line) :
         line = strat_string_coq
     if eta_pattern_coq.match(line) :
@@ -78,4 +83,6 @@ for line in fileinput.input(["oracleExtract.v", "./runtime/OTP.ml", "./runtime/e
         line = strat_string_python
     if round_pattern_python.match(line) :
         line = round_string_python
+    if example_pattern_python.match(line) :
+        line = example_string_python
     sys.stdout.write(line)

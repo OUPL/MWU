@@ -3810,7 +3810,7 @@ let inRel_list_complete_bool =
 (** val num_strategies : nat **)
 
 let num_strategies =
-  S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S O))))))))))))))))
+  S (S (S (S (S (S (S (S (S (S O)))))))))
 
 (** val eta : d **)
 
@@ -3821,7 +3821,10 @@ let eta =
 
 let num_rounds =
   Coq_N.of_nat (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
-    (S (S (S O))))))))))))))))))))))))
+    (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+    (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+    (S (S (S (S (S (S (S (S (S (S (S
+    O))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
 
 (** val inputChanName : char list **)
 

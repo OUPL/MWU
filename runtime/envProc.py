@@ -4,8 +4,8 @@ import random
 inBuff = open('envInput', 'r')
 outBuff = open('envOutput', 'w')
 
-num_strats = 17
-num_rounds = 24
+num_strats = 10
+num_rounds = 80
 
 def floatToDyadic (x) :
     frac = float.as_integer_ratio(x)

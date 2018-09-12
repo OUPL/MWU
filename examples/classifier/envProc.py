@@ -107,9 +107,9 @@ def run_python_classifier(control):
 inBuff = open('envInput', 'r')
 outBuff = open('envOutput', 'w')
 
-num_rounds = 100
-num_strats = 15
-num_examples = 25
+num_rounds = 80
+num_strats = 10
+num_examples = 20
 
 #Get nontrivial example set (not all correct initially)
 all_correct_initially = True
