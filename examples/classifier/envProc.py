@@ -1,3 +1,20 @@
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+*                                                               *
+*                          envProc.py                           *
+*                                                               *
+* Filename: envProc.py                                          *
+*                                                               *
+* Description: This file implements an environment for the      *
+*              verified MWU client to implement a linear        *
+*              classifier. This program generates a random      *
+*              example set and generates gain vectors           *
+*              for MWU to use as the set is classified.         *
+*              Upon complete classification, the program also   *
+*              runs an implementation fully in Python for       *
+*              comparison and research purposes.                *
+*                                                               *
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 import random
 import numpy
 import matplotlib
