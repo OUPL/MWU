@@ -20,7 +20,7 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
   Definition num_rounds := N.of_nat 24.
 
   (* Change this to change the identifier of the input/output channels *)
-  Definition inputChanName : string := 
+  Definition inputChanName : string :=
     "./clientInput".
   Definition outputChanName : string :=
     "./clientOutput".
@@ -47,7 +47,7 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
       to adjust.
 
      The following terms need extraction directives. These
-      can be adjusted to change how networking is handled. 
+      can be adjusted to change how networking is handled.
       At the moment, the extracted code uses named pipes
       to pass information to and from a process acting
       as a shim between the client and an arbitrary program
@@ -170,7 +170,7 @@ Proof.
   intros H_contra. congruence.
 Qed.
 
-Lemma Mt_refl_pair : 
+Lemma Mt_refl_pair :
     forall (A : Type) (p q : M.t * A),
       Bool.reflect (eq (fst p) (fst q)) (Mt_eqb_pair _ p q).
 Proof.
@@ -224,7 +224,7 @@ Qed.
 Definition prerecv_chk_complete_in_range_bool :=
   InRel_list_complete_bool _ _ in_range_bool M.enumerable.
 
-(* 
+(*
   Our prerecv function simply calls the
     prerecv_recv function and validates its return
     using the prerecv_chk_complete and prerecv_chk_nodup
@@ -280,14 +280,14 @@ Lemma myOracle_recv_no_dup :
         (fst (prerecv_recv ch)).
 Proof.
   intros.
-  unfold prerecv in H. inversion H. 
+  unfold prerecv in H. inversion H.
   rewrite Bool.andb_true_iff in H1.
   destruct H1.
   unfold prerecv_chk_nodup in H1.
   erewrite <- Bool.reflect_iff in H1.
   2: {
     apply R_NoDupA_refl.
-    unfold uniqR_bool. 
+    unfold uniqR_bool.
     apply Mt_refl_pair.
   }
   auto.
@@ -335,7 +335,7 @@ Qed.
 (*
   With everything built previously, we can construct
     an instance of the ClientOracle.
-*)  
+*)
 
 Program Instance myOracle : ClientOracle :=
   (@mkOracle M.t
@@ -382,13 +382,13 @@ Next Obligation.
   destruct x. rewrite Nat2N.id. auto.
 Defined.
 
-Lemma valSuffEq : 
+Lemma valSuffEq :
   forall x y, M.val x = M.val y -> x = y.
 Proof.
   move => x y pf.
   destruct x. simpl in pf.
   generalize pf0. rewrite pf.
-  destruct y; simpl; move => pf2. 
+  destruct y; simpl; move => pf2.
   f_equal. apply proof_irrelevance.
 Qed.
 
@@ -473,7 +473,7 @@ Lemma relMorphNoDupA :
     SetoidList.NoDupA R2 l.
 Proof.
   intros.
-  induction H. auto.  
+  induction H. auto.
   constructor. intros H2.
   apply SetoidList.InA_alt in H2.
   apply H.
@@ -576,7 +576,7 @@ Proof.
   rewrite mem_enum.
   replace (x \in enumerate @MWUProof.t eqMix choiceMix fin_mixin) with true.
   auto. simpl. symmetry.
-  replace ((x \in enumerate MWUextract.A.t) = true) with 
+  replace ((x \in enumerate MWUextract.A.t) = true) with
     (is_true (x \in enumerate MWUextract.A.t)).
   2: auto.
   rewrite listlemmas.list_in_iff.
@@ -593,11 +593,11 @@ Proof.
   constructor.
 Qed.
 
-Definition initMatch : 
+Definition initMatch :
   match_states_myOracles init_oracle_st
       (@oracle_init_state MWUextract.A.t myOracle).
 Proof.
-  unfold match_states_myOracles.  
+  unfold match_states_myOracles.
   constructor.
 Qed.
 
@@ -609,12 +609,12 @@ Import Reals.
 Import dyadic numerics weightslang.
 Import MWUProof.
 
-Lemma mwu_proof : 
+Lemma mwu_proof :
   forall finState,
     MWUextract.interp
       (mult_weights
          (MWUProof.t (eq_mixin:=eqMix) (choice_mixin:=choiceMix) fin_mixin)
-         num_rounds) (MWUextract.init_cstate eta) = 
+         num_rounds) (MWUextract.init_cstate eta) =
     Some finState ->
     exists
       s' : state
@@ -640,7 +640,7 @@ Proof.
   1: apply etaOk.
   1: apply roundsPf.
   auto.
-Qed. 
+Qed.
 
 (* These are some basic extraction directives to
     reduce Coq types to their corresponding OCaml types *)
@@ -656,3 +656,4 @@ Extraction Language OCaml.
 
 
 Extraction "./runtime/extractedMWU" extractedMW.
+Extraction "./examples/classifier/extractedMWU" extractedMW.
