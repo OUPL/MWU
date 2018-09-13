@@ -2,7 +2,7 @@
 *                                                               *
 *                      CLASS DEFINITION                         *
 *                                                               *
-* Name: Classifier_Client                                       *
+* Name: Classifier_Environment                                  *
 *                                                               *
 * Purpose: This class allows multiple instances of the MWUA     *
 *          for different linear classifiers to be generated     *
@@ -58,7 +58,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import math
 
-class Classifier_Client:
+class Classifier_Environment:
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     *                                                               *
@@ -67,9 +67,10 @@ class Classifier_Client:
     * Name: __init__                                                *
     *                                                               *
     * Purpose: This function initializes all the attributes used    *
-    *          by the Classifier_Client class. These attributes     *
-    *          include the exmaples set, epsilon value, dimension,  *
-    *          target vector, rho, eta, and number of rounds.       *
+    *          by the Classifier_Environment class. These           *
+    *          attributes include the exmaples set, epsilon value,  *
+    *          dimension, target vector, rho, eta, and number of    *
+    *          rounds.                                              *
     *                                                               *
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     def __init__(self, examples, epsilon):
@@ -348,5 +349,5 @@ class Classifier_Client:
         plt.show()
         return
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-                   END CLASS CLASSIFIER_CLIENT
+                   END CLASS CLASSIFIER_ENVIRONMENT
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

@@ -20,7 +20,7 @@ import numpy
 import matplotlib
 import matplotlib.pyplot as plt
 import math
-from Classifier_Client import Classifier_Client
+from Classifier_Environment import Classifier_Environment
 from Classifier import Classifier
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -135,7 +135,7 @@ while all_correct_initially == True:
     examples = generated_set[0]
     epsilon = generated_set[1]
 
-    experiment = Classifier_Client(examples, epsilon)
+    experiment = Classifier_Environment(examples, epsilon)
     control = Classifier(examples, epsilon)
     if experiment.num_correctly_classified() < num_examples:
         all_correct_initially = False
