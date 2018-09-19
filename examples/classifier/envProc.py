@@ -170,7 +170,7 @@ for x in range(1, num_rounds + 1):
     if experiment.is_classified_flag == True:
         print "Fully Classified!"
         run_python_classifier(control)
-        break
+        exit()
 
     dyadic_gain_list = floatListToDyadic(gain_vector)
     dyadic_gain_string = stringOfDyadicList(dyadic_gain_list)
