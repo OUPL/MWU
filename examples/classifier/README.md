@@ -1,11 +1,11 @@
-# MWU/runtime
+# MWU/examples/classifier
 
-This is directory to which OCaml files are extracted from `MWU/oracleExtract.v`.
-It also contains code for connecting the extracted program to a larger system
+This is a directory to which OCaml files are extracted from `MWU/oracleExtract.v`.
+It also contains code for that connects the extracted program to a larger system
 that employs the verified MWU to to solve a randomly generated linear
 classification problem.
 
-# Detailed Description
+## Detailed Description
 
 The Python program in envProc.py randomly generates a hyperplane of given
 dimension as well as a set of examples classifiable by the random hyperplane.
