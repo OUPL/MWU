@@ -7,6 +7,7 @@ classification problem.
 
 ## Detailed Description
 
+###Overview
 The Python program in envProc.py randomly generates a hyperplane of given
 dimension as well as a set of examples classifiable by the random hyperplane.
 
@@ -21,6 +22,31 @@ generating a gain vector according to the following formula:
 This exchange of new weight vectors and gains proceeds until the set of
 examples is fully classified. The system then proceeds to classify the same
 example set via a Python implementation for comparison purposes.
+
+###Description of Files for this Application
+####envProc.py
+This Python script implements the environment for the verified MWU client
+to communicate with. It creates an instance of a classification problem using
+the Classifier_Environment class found in Classifier_Environment.py and then
+proceeds receiving weight vectors from the client and sending back appropriate
+gain vectors until the example set is fully classified.
+
+The script continues by creating an instance of the same example set in the
+fully Python-reliant Classifier class and running the MWU algorithm in Python
+for comparison purposes.
+
+####Classifier_Environment.py
+This file implements the Classifier_Environment class which is designed to be
+used specifically with the verified MWU client as it accounts for the use of
+dyadic weight vectors. The class allows for dyadic weight vectors to be used to
+update the target classification vector and then uses this target and example
+set to return a gain vector for the next round.
+
+####Classifier.py
+This class implements a fully independent instance of the MWU algorithm for
+solving linear classifiers completely in Python. It can be initialized with an
+example set and epsilon value and can then, when run, classify the example
+set within a theoretically specified bound of iterations.
 
 ## Prerequisites
 * OCaml (>= 4.04.0)
