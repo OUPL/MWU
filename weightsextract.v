@@ -100,7 +100,7 @@ Module MWUPre (A : MyOrderedType).
   Module MProps := Properties M.
 
   Definition cGamma (weights : M.t D) : Q :=
-    D_to_Q (M.fold (fun a q acc => Dadd q acc) weights (Dmake 0 1)).
+    D_to_Q (M.fold (fun a q acc => Dadd q acc) weights (DD (Dmake 0 1))).
 
   Section mwu.
     Variable num_players : nat.
@@ -1376,7 +1376,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
     case: (oracle_presend _ _) => //.
     destruct (mwu_send a) eqn:Hsend.
     case Hnx: nx => /= [//|p]; rewrite Pos2Nat.inj_iter => H.
-    have [n ->]: exists n, Pos.to_nat p = n.+1.
+    have [n ->]: exists n, Pos.to_nat p = S n.
     { apply: Pos2Nat.is_succ. }
     simpl.
     case: (nat_rect _ _) => // [s1].

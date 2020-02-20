@@ -18,7 +18,7 @@ Require Import ExtrOcamlZBigInt ExtrOcamlString.
 
   Definition three : Z := Zpos 3.
 
-  Definition eta := dyadic.Dmake (three) (3%positive).
+  Definition eta := dyadic.DD (dyadic.Dmake (three) (3%positive)).
 
   Definition num_rounds := N.of_nat 80.
 
@@ -591,7 +591,7 @@ Proof.
 Qed.
 
 
-Lemma etaOk : MWUProof.epsOk (numerics.Q_to_rat (dyadic.DO_to_Q eta)).
+Lemma etaOk : MWUProof.epsOk (numerics.Q_to_rat (dyadic.D_to_Q eta)).
 Proof.
   constructor.
 Qed.

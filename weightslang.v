@@ -923,7 +923,7 @@ Section semantics.
     { clear - H; rewrite /N.lt N2Nat.inj_compare.
       rewrite nat_of_bin_to_nat in H.
       by rewrite -nat_compare_lt /lt; apply/leP. }
-    have ->: (N.to_nat (N.pred n0)).+1 = N.to_nat n0.
+    have ->: (S (N.to_nat (N.pred n0))) = N.to_nat n0.
     { rewrite -N2Nat.inj_succ N.succ_pred_pos => //. }
     constructor => //.
   Qed.
@@ -1190,13 +1190,13 @@ Section semantics.
   Proof.
     move => H; move: H s'; induction 1; subst;
       try solve[inversion 1; subst; eexists; split => //; constructor => //].
-    { move => s' H; exists n.+1; split => //.
+    { move => s' H; exists (S n); split => //.
       apply: NSeq; first by constructor.
       by []. }
     inversion 1; subst c0 c3 s0 s3 n.
     have H8: (n0.+1 >= n0)%coq_nat by omega.
     case: (IHstep _ (stepN_weaken H8 H4)) => n []H1 H2.
-    exists n.+1; split; try omega.
+    exists (S n); split; try omega.
     have H9: (n >= n0)%coq_nat by omega.
     apply: NSeq.
     apply: H2.
@@ -1234,7 +1234,7 @@ Section semantics.
     { inversion H.
       { subst c1 c2 s0 s''.
         case: IHstep_plus => // n H6.
-        exists n.+1.
+        exists (S n).
         apply: NSeq.
         constructor.
         apply: H6. }
@@ -1243,7 +1243,7 @@ Section semantics.
       clear - H1 H8.
       inversion H8; subst.
       case: (step_stepN H1 H3) => n []H9 H10.
-      exists n.+1.
+      exists (S n).
       apply: NSeq.
       apply: H10.
       apply: stepN_weaken; last by apply: H6.
@@ -1895,7 +1895,7 @@ Section mult_weights_refinement.
     have H7: (n0 < n0.+2)%coq_nat by omega.
     rewrite (IH _ H7 s1'0 _ (N.pred nx)) => //.
     rewrite N2Nat.inj_pred.
-    have H11: size (all_costs s1'0) = (size (all_costs s)).+1.
+    have H11: size (all_costs s1'0) = S (size (all_costs s)).
     { clear - H5.
       inversion H5; subst. clear H5.
       inversion H6; subst. clear H6.
@@ -2116,7 +2116,7 @@ Proof.
 Qed.    
 
 Lemma size_removelast T (l : list T) :
-  size (List.removelast l) = (size l).-1.
+  size (List.removelast l) = Nat.pred (size l).
 Proof.
   elim: l => // a l IH.
   by case: l IH => // b l /= ->.
@@ -2189,7 +2189,7 @@ Section semantics_lemmas.
       state_expCost1_aux cs2 (last d0 ds1 :: ds2) = state_expCost2 (SEpsilonOk s) cs2 ->
       upto_oracle_eq (mult_weights1_loop_right a0 cs1 s) s' ->
       SOutputs s' = ds1 ++ ds2 ->
-      (size cs1).+1 = size ds1 -> 
+      S (size cs1) = size ds1 -> 
       state_expCost1_aux (cs1++cs2) (ds1++ds2) =
       state_expCost2 (SEpsilonOk s) (cs1++cs2).
   Proof.
