@@ -556,7 +556,7 @@ Module MWUProof (T : MyOrderedType) (MWU : MWU_Type with Module A := T).
   Proof.
     elim: l s => //.
     { move => s /= IH; rewrite /gamma' /= big_nil.
-      rewrite D_to_Q0' /Q_to_rat /= fracqE /=.
+      rewrite DO_to_Q0' /Q_to_rat /= fracqE /=.
       by rewrite GRing.mul0r. }
     case => a q l IH s /= H.
     symmetry.

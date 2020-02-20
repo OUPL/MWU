@@ -8,7 +8,9 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import all_algebra.
 
+
 Import GRing.Theory Num.Def Num.Theory.
+Require Import Lra.
 
 Require Import OUVerT.extrema OUVerT.dist OUVerT.numerics OUVerT.bigops.
 
@@ -411,7 +413,7 @@ Section weights.
     rewrite /Rpower.
     case: (Req_dec y 0%R).
     { move=> ->; rewrite Rmult_0_l exp_0.
-      by move=> _ _; apply: Fourier_util.Rlt_zero_1. }
+      by move=> _ _; lra. }
     move=> H H2 H3.
     apply: exp_pos.
   Qed.   
@@ -780,7 +782,7 @@ Section weights.
     : seq CMAX_costs_seq
     := (match cs' as cs'' return _ = cs'' -> seq CMAX_costs_seq with
         | [::] => fun _ => [::]
-        | [:: cs'' & cs'_rest] => fun pf => [:: exist _ cs'' _ & @subSeqs_aux cs'_rest _]
+        | [:: cs'' & cs'_rest] => fun pf : cs' = cs'' :: cs'_rest  => [:: exist _ cs'' _ & @subSeqs_aux cs'_rest _]
         end) erefl.
   Next Obligation. by case: (andP CMAX). Qed.
   Next Obligation. by case: (andP CMAX). Qed.
@@ -1339,7 +1341,7 @@ Section weights_noregret.
   Lemma size_A_ge0 : (0 <= ln (rat_to_R #|A|%:R))%R.
   Proof.
     rewrite -ln_1; apply: ln_le.
-    apply: Rlt_zero_1.
+    lra.
     apply: (rat_to_R_Acard_ge1 a0).
   Qed.
 
@@ -1358,7 +1360,7 @@ Section weights_noregret.
   Lemma T_neq0 : (T <> 0)%R.
   Proof.
     move => H; move: T_gt0; rewrite H.
-    by move: (Rnot_lt0 0); rewrite Rmult_0_l.
+    lra.
   Qed.
 
   Lemma Tinv_ge0 : (0 <= / T)%R.
